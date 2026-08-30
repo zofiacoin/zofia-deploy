@@ -1,4 +1,4 @@
-name: Deploy ZOFIA to Ethereum
+name: Mint & Verify ZOFIA
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  mint-and-verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,18 +34,38 @@ jobs:
       - name: Build contract
         run: forge build
 
-      - name: Deploy to Ethereum
+      # ========== سك 100 تريليون ZOFIA ==========
+      - name: Mint 100 Trillion ZOFIA
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
-          forge create --rpc-url https://ethereum.publicnode.com \
+          # 100,000,000,000,000 * 10^18 = 100000000000000000000000000000000000 (100 تريليون مع 18 صفر)
+          AMOUNT="100000000000000000000000000000000000"
+          echo "Minting $AMOUNT ZOFIA to $RECIPIENT..."
+          cast send ${{ secrets.CONTRACT_ADDRESS }} \
+            "mintForMigration(address,uint256)" \
+            $RECIPIENT $AMOUNT \
             --private-key $PRIVATE_KEY \
-            src/ZOFIA.sol:ZOFIA \
-            --gas-price 1gwei \
-            --gas-limit 5000000 \
-            --broadcast
+            --rpc-url https://ethereum.publicnode.com
 
-      - name: Print contract address
+      # ========== توثيق العقد على Etherscan ==========
+      - name: Verify Contract on Etherscan
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: |
-          echo "✅ Contract deployed successfully!"
-          echo "🔗 Check on Etherscan: https://etherscan.io/address/$(cat out/ZOFIA.sol/ZOFIA.json | jq -r '.address')"
+          forge verify-contract \
+            --chain-id 1 \
+            --num-of-optimizations 200 \
+            --watch \
+            ${{ secrets.CONTRACT_ADDRESS }} \
+            src/ZOFIA.sol:ZOFIA \
+            --verifier etherscan \
+            --verifier-url https://api.etherscan.io/api \
+            --etherscan-api-key $ETHERSCAN_API_KEY
+
+      - name: Print result
+        run: |
+          echo "✅ 100 Trillion ZOFIA minted successfully!"
+          echo "🔗 Check your balance: https://etherscan.io/address/${{ secrets.RECIPIENT_ADDRESS }}"
+          echo "🔗 Verified contract: https://etherscan.io/address/${{ secrets.CONTRACT_ADDRESS }}#code"
