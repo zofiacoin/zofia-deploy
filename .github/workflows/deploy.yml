@@ -20,8 +20,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install OpenZeppelin via npm
-        run: npm install @openzeppelin/contracts
+      - name: Install OpenZeppelin v4.9 (includes ERC20Snapshot)
+        run: npm install @openzeppelin/contracts@4.9.6
 
       - name: Create src directory and copy contract
         run: |
