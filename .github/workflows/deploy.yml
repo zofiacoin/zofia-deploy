@@ -15,16 +15,21 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install OpenZeppelin via npm
+        run: npm install @openzeppelin/contracts
+
       - name: Create src directory and copy contract
         run: |
           mkdir -p src
           cp contracts/ZOFIA.sol src/
 
-      - name: Install OpenZeppelin
-        run: forge install OpenZeppelin/openzeppelin-contracts
-
       - name: Create remappings.txt
-        run: echo "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/" > remappings.txt
+        run: echo "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/" > remappings.txt
 
       - name: Deploy to Ethereum
         env:
