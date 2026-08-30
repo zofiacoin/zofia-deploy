@@ -41,7 +41,9 @@ jobs:
           forge create --rpc-url https://ethereum.publicnode.com \
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
-            --gas-price 1gwei
+            --gas-price 1gwei \
+            --gas-limit 5000000 \
+            --broadcast
 
       - name: Print contract address
         run: |
