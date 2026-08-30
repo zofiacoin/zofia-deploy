@@ -23,24 +23,57 @@ contract ZOFIA is
     constructor(address initialOwner)
         ERC20("zooq official", "ZOFIA")
         ERC20Permit("zooq official")
-        Ownable(initialOwner)
-    {}
+    {
+        // نقل الملكية إلى العنوان المطلوب بعد النشر
+        transferOwnership(initialOwner);
+    }
 
+    // دالة لإضافة رموز للهجرة (للاستدعاء من عقد الهجرة)
     function mintForMigration(address to, uint256 amount) external onlyOwner {
         require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
         _mint(to, amount);
     }
 
+    // دالة لأخذ لقطة (snapshot) يدوياً
     function snapshot() external onlyOwner {
         _snapshot();
     }
 
-    function _update(address from, address to, uint256 value)
+    // ========== تجاوزات الدوال الأساسية للتعامل مع الـ Inheritance ==========
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
         internal
-        override(ERC20, ERC20Snapshot, ERC20Votes)
+        override(ERC20, ERC20Snapshot)
     {
-        super._update(from, to, value);
+        // استدعاء الدالة من ERC20 (فارغة) و ERC20Snapshot (تأخذ اللقطة)
+        super._beforeTokenTransfer(from, to, amount);
     }
+
+    function _afterTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override(ERC20, ERC20Votes)
+    {
+        // استدعاء الدالة من ERC20 (فارغة) و ERC20Votes (تحديث نقاط التصويت)
+        super._afterTokenTransfer(from, to, amount);
+    }
+
+    function _mint(address account, uint256 amount)
+        internal
+        override(ERC20, ERC20Votes)
+    {
+        // استدعاء ERC20 و ERC20Votes لإتمام عملية السك
+        super._mint(account, amount);
+    }
+
+    function _burn(address account, uint256 amount)
+        internal
+        override(ERC20, ERC20Votes)
+    {
+        // استدعاء ERC20 و ERC20Votes لإتمام عملية الحرق
+        super._burn(account, amount);
+    }
+
+    // ========== تجاوز دالة nonces لتجنب التعارض ==========
 
     function nonces(address owner)
         public
