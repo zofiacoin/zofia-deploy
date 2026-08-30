@@ -20,32 +20,28 @@ contract ZOFIA is
 {
     uint256 public constant MAX_SUPPLY = 100_000_000_000_000 * 10 ** 18;
 
-    constructor(address initialOwner)
+    // Constructor بدون وسائط: المالك هو عنوان الناشر (msg.sender)
+    constructor()
         ERC20("zooq official", "ZOFIA")
         ERC20Permit("zooq official")
     {
-        // نقل الملكية إلى العنوان المطلوب بعد النشر
-        transferOwnership(initialOwner);
+        // نقل الملكية إلى عنوان الناشر
+        transferOwnership(msg.sender);
     }
 
-    // دالة لإضافة رموز للهجرة (للاستدعاء من عقد الهجرة)
     function mintForMigration(address to, uint256 amount) external onlyOwner {
         require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
         _mint(to, amount);
     }
 
-    // دالة لأخذ لقطة (snapshot) يدوياً
     function snapshot() external onlyOwner {
         _snapshot();
     }
-
-    // ========== تجاوزات الدوال الأساسية للتعامل مع الـ Inheritance ==========
 
     function _beforeTokenTransfer(address from, address to, uint256 amount)
         internal
         override(ERC20, ERC20Snapshot)
     {
-        // استدعاء الدالة من ERC20 (فارغة) و ERC20Snapshot (تأخذ اللقطة)
         super._beforeTokenTransfer(from, to, amount);
     }
 
@@ -53,7 +49,6 @@ contract ZOFIA is
         internal
         override(ERC20, ERC20Votes)
     {
-        // استدعاء الدالة من ERC20 (فارغة) و ERC20Votes (تحديث نقاط التصويت)
         super._afterTokenTransfer(from, to, amount);
     }
 
@@ -61,7 +56,6 @@ contract ZOFIA is
         internal
         override(ERC20, ERC20Votes)
     {
-        // استدعاء ERC20 و ERC20Votes لإتمام عملية السك
         super._mint(account, amount);
     }
 
@@ -69,11 +63,8 @@ contract ZOFIA is
         internal
         override(ERC20, ERC20Votes)
     {
-        // استدعاء ERC20 و ERC20Votes لإتمام عملية الحرق
         super._burn(account, amount);
     }
-
-    // ========== تجاوز دالة nonces لتجنب التعارض ==========
 
     function nonces(address owner)
         public

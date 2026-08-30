@@ -34,21 +34,13 @@ jobs:
       - name: Build contract
         run: forge build
 
-      - name: Get deployer address (clean)
-        id: deployer
-        run: |
-          ADDRESS=$(cast wallet address --private-key ${{ secrets.PRIVATE_KEY }} | tr -d '\n')
-          echo "address=$ADDRESS" >> $GITHUB_OUTPUT
-
       - name: Deploy to Ethereum
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          DEPLOYER_ADDRESS: ${{ steps.deployer.outputs.address }}
         run: |
           forge create --rpc-url https://ethereum.publicnode.com \
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
-            --constructor-args "$DEPLOYER_ADDRESS" \
             --gas-price 1gwei
 
       - name: Print contract address
