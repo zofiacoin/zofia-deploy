@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -45,7 +46,7 @@ contract ZOFIA is
     function nonces(address owner)
         public
         view
-        override(ERC20Permit, Nonces)
+        override(ERC20Permit)
         returns (uint256)
     {
         return super.nonces(owner);
