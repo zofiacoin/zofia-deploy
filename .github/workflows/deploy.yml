@@ -34,13 +34,15 @@ jobs:
       - name: Build contract
         run: forge build
 
-      # ========== سك 100 تريليون ZOFIA ==========
-      - name: Mint 100 Trillion ZOFIA
+      # ========== سك 100 تريليون - 1 ZOFIA ==========
+      - name: Mint MAX_SUPPLY - 1 ZOFIA
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
-          AMOUNT="100000000000000000000000000000000"
+          # MAX_SUPPLY = 100_000_000_000_000 * 10^18 = 10^32
+          # نستخدم 10^32 - 1 لتجنب خطأ "exceeds max supply"
+          AMOUNT="99999999999999999999999999999999"
           echo "Minting $AMOUNT ZOFIA to $RECIPIENT..."
           cast send ${{ secrets.CONTRACT_ADDRESS }} \
             "mintForMigration(address,uint256)" \
@@ -64,6 +66,6 @@ jobs:
 
       - name: Print result
         run: |
-          echo "✅ 100 Trillion ZOFIA minted successfully!"
+          echo "✅ ZOFIA minted successfully (MAX_SUPPLY - 1)!"
           echo "🔗 Check your balance: https://etherscan.io/address/${{ secrets.RECIPIENT_ADDRESS }}"
           echo "🔗 Verified contract: https://etherscan.io/address/${{ secrets.CONTRACT_ADDRESS }}#code"
