@@ -3,46 +3,29 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
 
 contract ZOFIA is
     ERC20,
     ERC20Burnable,
-    ERC20Snapshot,
     Ownable,
     ERC20Permit,
-    ERC20Votes,
-    ERC20FlashMint
+    ERC20Votes
 {
     uint256 public constant MAX_SUPPLY = 100_000_000_000_000 * 10 ** 18;
 
-    // Constructor بدون وسائط: المالك هو عنوان الناشر (msg.sender)
     constructor()
         ERC20("zooq official", "ZOFIA")
         ERC20Permit("zooq official")
     {
-        // نقل الملكية إلى عنوان الناشر
         transferOwnership(msg.sender);
     }
 
     function mintForMigration(address to, uint256 amount) external onlyOwner {
         require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
         _mint(to, amount);
-    }
-
-    function snapshot() external onlyOwner {
-        _snapshot();
-    }
-
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        override(ERC20, ERC20Snapshot)
-    {
-        super._beforeTokenTransfer(from, to, amount);
     }
 
     function _afterTokenTransfer(address from, address to, uint256 amount)
