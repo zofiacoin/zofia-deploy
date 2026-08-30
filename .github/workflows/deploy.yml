@@ -12,19 +12,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Install dependencies
-        run: npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox dotenv
+      - name: Create src directory and copy contract
+        run: |
+          mkdir -p src
+          cp contracts/ZOFIA.sol src/
 
-      - name: Create .env file
-        run: echo "PRIVATE_KEY=${{ secrets.PRIVATE_KEY }}" > .env
+      - name: Install OpenZeppelin
+        run: forge install OpenZeppelin/openzeppelin-contracts
 
-      - name: Compile contracts
-        run: npx hardhat compile
+      - name: Create remappings.txt
+        run: echo "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/" > remappings.txt
 
       - name: Deploy to Ethereum
-        run: npx hardhat run scripts/deploy.js --network ethereum
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        run: |
+          forge create --rpc-url https://ethereum.publicnode.com \
+            --private-key $PRIVATE_KEY \
+            src/ZOFIA.sol:ZOFIA \
+            --constructor-args $(cast wallet address --private-key $PRIVATE_KEY) \
+            --gas-price 1gwei
