@@ -20,23 +20,40 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install OpenZeppelin v4.9 (includes ERC20Snapshot)
+      - name: Install OpenZeppelin v4.9.6
         run: npm install @openzeppelin/contracts@4.9.6
 
-      - name: Create src directory and copy contract
+      - name: Prepare contract files
         run: |
           mkdir -p src
           cp contracts/ZOFIA.sol src/
 
-      - name: Create remappings.txt
+      - name: Set up remappings
         run: echo "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/" > remappings.txt
+
+      - name: Build contract
+        run: forge build
+
+      - name: Get deployer address
+        id: deployer
+        run: echo "address=$(cast wallet address --private-key ${{ secrets.PRIVATE_KEY }})" >> $GITHUB_OUTPUT
 
       - name: Deploy to Ethereum
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          DEPLOYER_ADDRESS: ${{ steps.deployer.outputs.address }}
         run: |
           forge create --rpc-url https://ethereum.publicnode.com \
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
-            --constructor-args $(cast wallet address --private-key $PRIVATE_KEY) \
-            --gas-price 1gwei
+            --constructor-args "$DEPLOYER_ADDRESS" \
+            --gas-price 1gwei \
+            --verify \
+            --verifier etherscan \
+            --verifier-url https://api.etherscan.io/api \
+            --etherscan-api-key ""
+
+      - name: Print contract address
+        run: |
+          echo "✅ Contract deployed successfully!"
+          echo "🔗 Check on Etherscan: https://etherscan.io/address/$(cat out/ZOFIA.sol/ZOFIA.json | jq -r '.address')"
