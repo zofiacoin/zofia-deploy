@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/governance/TimelockController.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract ZOFIA is
@@ -29,8 +28,8 @@ contract ZOFIA is
     uint256 public constant MAX_SUPPLY = 100_000_000_000_000 * 10 ** 18;
     uint256 public constant AUTO_BURN_PERCENT = 100; // 1% (100 basis points)
     uint256 public constant BASIS_POINTS = 10_000;
-    uint256 public constant VESTING_DURATION = 24 * 30 days; // 24 months
-    uint256 public constant VESTING_CLIFF = 6 * 30 days; // 6 months cliff
+    uint256 public constant VESTING_DURATION = 24 * 30 days;
+    uint256 public constant VESTING_CLIFF = 6 * 30 days;
     uint256 public constant TIMELOCK_DELAY = 48 hours;
 
     // ==================== STATE VARIABLES ====================
@@ -67,13 +66,8 @@ contract ZOFIA is
     {
         require(timelock != address(0) && multisigOwner != address(0), "Invalid addresses");
 
-        // إعداد الحوكمة مع Timelock
         timelockController = timelock;
-
-        // نقل الملكية إلى Multi‑Sig
         transferOwnership(multisigOwner);
-
-        // منح صلاحيات إضافية لـ Timelock
         _grantRole(DEFAULT_ADMIN_ROLE, timelock);
         _grantRole(DEFAULT_ADMIN_ROLE, multisigOwner);
     }
@@ -88,7 +82,6 @@ contract ZOFIA is
         require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
         require(to != address(0), "Invalid recipient");
         require(amount > 0, "Amount must be > 0");
-
         _mint(to, amount);
         emit VestingCreated(to, amount);
     }
@@ -200,13 +193,6 @@ contract ZOFIA is
         super._burn(account, amount);
         totalBurned += amount;
         emit Burned(account, amount);
-    }
-
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Votes)
-    {
-        super._update(from, to, value);
     }
 
     function nonces(address owner)
