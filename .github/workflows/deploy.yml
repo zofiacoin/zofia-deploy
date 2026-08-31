@@ -39,12 +39,10 @@ jobs:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
-          # استخدام متغير منفصل للوسيط لتجنب مشاكل الـ argument splitting
-          CONSTRUCTOR_ARG="$RECIPIENT"
           forge create --rpc-url https://ethereum.publicnode.com \
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
-            --constructor-args $CONSTRUCTOR_ARG \
+            --constructor-args $RECIPIENT \
             --gas-price 1gwei \
             --gas-limit 5000000 \
             --broadcast
