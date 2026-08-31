@@ -42,7 +42,7 @@ jobs:
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
             --gas-price 1gwei \
-            --gas-limit 5000000 \
+            --gas-limit 2500000 \
             --broadcast
 
       - name: Mint 50 Trillion ZOFIA
@@ -57,7 +57,7 @@ jobs:
             $RECIPIENT $AMOUNT \
             --private-key $PRIVATE_KEY \
             --rpc-url https://ethereum.publicnode.com \
-            --gas-limit 3000000
+            --gas-limit 2000000
 
       - name: Verify Contract on Etherscan
         env:
