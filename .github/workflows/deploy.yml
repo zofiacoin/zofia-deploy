@@ -1,4 +1,4 @@
-name: Deploy & Verify ZOFIA V3
+name: Deploy ZOFIA V3
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-and-verify:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -42,37 +42,5 @@ jobs:
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
             --gas-price 1gwei \
-            --gas-limit 2500000 \
+            --gas-limit 3000000 \
             --broadcast
-
-      - name: Mint 50 Trillion ZOFIA
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
-        run: |
-          AMOUNT="50000000000000000000000000000000"
-          echo "Minting $AMOUNT ZOFIA to $RECIPIENT..."
-          cast send ${{ secrets.CONTRACT_ADDRESS }} \
-            "mintForMigration(address,uint256)" \
-            $RECIPIENT $AMOUNT \
-            --private-key $PRIVATE_KEY \
-            --rpc-url https://ethereum.publicnode.com \
-            --gas-limit 2000000
-
-      - name: Verify Contract on Etherscan
-        env:
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-        run: |
-          forge verify-contract \
-            ${{ secrets.CONTRACT_ADDRESS }} \
-            src/ZOFIA.sol:ZOFIA \
-            --chain-id 1 \
-            --verifier etherscan \
-            --verifier-url "https://api.etherscan.io/v2/api?chainid=1" \
-            --etherscan-api-key $ETHERSCAN_API_KEY \
-            --watch
-
-      - name: Print result
-        run: |
-          echo "✅ ZOFIA V3 deployed and verified!"
-          echo "🔗 Contract: https://etherscan.io/address/${{ secrets.CONTRACT_ADDRESS }}"

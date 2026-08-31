@@ -46,7 +46,7 @@ contract ZOFIA is
         emit MintedForMigration(to, amount);
     }
 
-    // ==================== TRANSFER ====================
+    // ==================== TRANSFER with Blacklist ====================
     function _transfer(
         address from,
         address to,
