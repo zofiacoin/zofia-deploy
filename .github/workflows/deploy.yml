@@ -1,4 +1,4 @@
-name: Mint & Verify ZOFIA
+name: Deploy & Verify ZOFIA V3
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  mint-and-verify:
+  deploy-and-verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,41 +34,39 @@ jobs:
       - name: Build contract
         run: forge build
 
-      # ========== الدفعة الأولى: 25 تريليون ZOFIA ==========
-      - name: Mint Batch 1 - 25 Trillion ZOFIA
+      - name: Deploy to Ethereum
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
-          # 25,000,000,000,000 * 10^18 = 25000000000000000000000000000000
-          AMOUNT="25000000000000000000000000000000"
-          echo "Minting $AMOUNT ZOFIA to $RECIPIENT (Batch 1: 25 Trillion)..."
+          # استخدام متغير منفصل للوسيط لتجنب مشاكل الـ argument splitting
+          CONSTRUCTOR_ARG="$RECIPIENT"
+          forge create --rpc-url https://ethereum.publicnode.com \
+            --private-key $PRIVATE_KEY \
+            src/ZOFIA.sol:ZOFIA \
+            --constructor-args $CONSTRUCTOR_ARG \
+            --gas-price 1gwei \
+            --gas-limit 5000000 \
+            --broadcast
+
+      - name: Mint 50 Trillion ZOFIA
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
+        run: |
+          AMOUNT="50000000000000000000000000000000"
+          echo "Minting $AMOUNT ZOFIA to $RECIPIENT..."
           cast send ${{ secrets.CONTRACT_ADDRESS }} \
             "mintForMigration(address,uint256)" \
             $RECIPIENT $AMOUNT \
             --private-key $PRIVATE_KEY \
             --rpc-url https://ethereum.publicnode.com \
-            --gas-limit 4000000
+            --gas-limit 3000000
 
-      # ========== الدفعة الثانية: 25 تريليون ZOFIA ==========
-      - name: Mint Batch 2 - 25 Trillion ZOFIA
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
-        run: |
-          AMOUNT="25000000000000000000000000000000"
-          echo "Minting $AMOUNT ZOFIA to $RECIPIENT (Batch 2: 25 Trillion)..."
-          cast send ${{ secrets.CONTRACT_ADDRESS }} \
-            "mintForMigration(address,uint256)" \
-            $RECIPIENT $AMOUNT \
-            --private-key $PRIVATE_KEY \
-            --rpc-url https://ethereum.publicnode.com \
-            --gas-limit 4000000
-
-      # ========== توثيق العقد على Etherscan ==========
       - name: Verify Contract on Etherscan
         env:
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
           forge verify-contract \
             ${{ secrets.CONTRACT_ADDRESS }} \
@@ -77,10 +75,10 @@ jobs:
             --verifier etherscan \
             --verifier-url "https://api.etherscan.io/v2/api?chainid=1" \
             --etherscan-api-key $ETHERSCAN_API_KEY \
-            --watch
+            --watch \
+            --constructor-args $(cast abi-encode "constructor(address)" $RECIPIENT)
 
       - name: Print result
         run: |
-          echo "✅ 50 Trillion ZOFIA minted successfully!"
-          echo "🔗 Check your balance: https://etherscan.io/address/${{ secrets.RECIPIENT_ADDRESS }}"
-          echo "🔗 Verified contract: https://etherscan.io/address/${{ secrets.CONTRACT_ADDRESS }}#code"
+          echo "✅ ZOFIA V3 deployed and verified!"
+          echo "🔗 Contract: https://etherscan.io/address/${{ secrets.CONTRACT_ADDRESS }}"
