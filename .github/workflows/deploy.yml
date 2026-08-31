@@ -39,12 +39,13 @@ jobs:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
-          # تنظيف العنوان من أي أحرف غير مرغوب فيها وتمريره كوسيط واحد
-          CLEAN_ADDRESS=$(echo $RECIPIENT | tr -d '\n\r')
+          # تنظيف العنوان من أي مسافات أو أسطر جديدة، ووضعه بين علامتي اقتباس مزدوجة
+          CLEAN_ADDRESS=$(echo "$RECIPIENT" | tr -d '\n\r' | xargs)
+          echo "Deploying with constructor arg: '$CLEAN_ADDRESS'"
           forge create --rpc-url https://ethereum.publicnode.com \
             --private-key $PRIVATE_KEY \
             src/ZOFIA.sol:ZOFIA \
-            --constructor-args $CLEAN_ADDRESS \
+            --constructor-args "$CLEAN_ADDRESS" \
             --gas-price 1gwei \
             --gas-limit 5000000 \
             --broadcast
@@ -55,10 +56,11 @@ jobs:
           RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
           AMOUNT="50000000000000000000000000000000"
-          echo "Minting $AMOUNT ZOFIA to $RECIPIENT..."
+          CLEAN_ADDRESS=$(echo "$RECIPIENT" | tr -d '\n\r' | xargs)
+          echo "Minting $AMOUNT ZOFIA to $CLEAN_ADDRESS..."
           cast send ${{ secrets.CONTRACT_ADDRESS }} \
             "mintForMigration(address,uint256)" \
-            $RECIPIENT $AMOUNT \
+            "$CLEAN_ADDRESS" $AMOUNT \
             --private-key $PRIVATE_KEY \
             --rpc-url https://ethereum.publicnode.com \
             --gas-limit 3000000
@@ -68,7 +70,7 @@ jobs:
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
           RECIPIENT: ${{ secrets.RECIPIENT_ADDRESS }}
         run: |
-          CLEAN_ADDRESS=$(echo $RECIPIENT | tr -d '\n\r')
+          CLEAN_ADDRESS=$(echo "$RECIPIENT" | tr -d '\n\r' | xargs)
           forge verify-contract \
             ${{ secrets.CONTRACT_ADDRESS }} \
             src/ZOFIA.sol:ZOFIA \
@@ -77,7 +79,7 @@ jobs:
             --verifier-url "https://api.etherscan.io/v2/api?chainid=1" \
             --etherscan-api-key $ETHERSCAN_API_KEY \
             --watch \
-            --constructor-args $(cast abi-encode "constructor(address)" $CLEAN_ADDRESS)
+            --constructor-args $(cast abi-encode "constructor(address)" "$CLEAN_ADDRESS")
 
       - name: Print result
         run: |
