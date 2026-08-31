@@ -31,11 +31,12 @@ contract ZOFIA is
     }
 
     // ==================== CONSTRUCTOR ====================
-    constructor(address initialOwner)
+    constructor()
         ERC20("zooq official", "ZOFIA")
         ERC20Permit("zooq official")
     {
-        transferOwnership(initialOwner);
+        // المالك هو عنوان الناشر (msg.sender)
+        _transferOwnership(msg.sender);
     }
 
     // ==================== MINTING ====================
